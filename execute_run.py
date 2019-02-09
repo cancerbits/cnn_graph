@@ -10,34 +10,41 @@ import pandas
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-%matplotlib inline
+import sys
+#%matplotlib inline
 
+print("Training file: {}".format(sys.argv[1]))
+print("Test file: {}".format(sys.argv[2]))
+print("Output directory: {}".format(sys.argv[3]))
 
 ## load training data (could be a CV-fold):
 dt_train = pandas.read_csv(sys.argv[1])
-X_train_tmp = dt_train.as_matrix()[:,0:-1]
-y_train_tmp = dt_train.as_matrix()[:,-1]
+X_train_tmp = dt_train.values[:,0:-1]
+y_train_tmp = dt_train.values[:,-1]
 
 ## load test data (could be a CV-fold):
 dt_test = pandas.read_csv(sys.argv[2])
-X_test = dt_test.as_matrix()[:,0:-1]
-y_test = dt_test.as_matrix()[:,-1]
+X_test = dt_test.values[:,0:-1]
+y_test = dt_test.values[:,-1]
 
 outdir = sys.argv[3]
 
 
 
 ## constants:
-c = y.max() + 1 	# number of classes
-assert c == np.unique(y).size
-n = len(y) 			# number of samples
-d = X.shape[1] 		# number of features
-n_val = n // 10 	# size of training validation dataset
+c = y_train_tmp.max() + 1 	# number of classes
+assert c == np.unique(y_train_tmp).size
+n = len(y_train_tmp) 		# number of samples
+d = X_train_tmp.shape[1]	# number of features
+assert d == X_test.shape[1]
+n_val = n // 10 		# size of training validation dataset
+n_train = n - n_val
+
 
 ## parameters for ML:
 params = dict()
 params['dir_name']       = 'demo'
-params['num_epochs']     = 40 #40
+params['num_epochs']     = 5 #40
 params['batch_size']     = 100
 params['eval_frequency'] = 200
 # Building blocks.
@@ -59,10 +66,10 @@ params['momentum']       = 0.9
 params['decay_steps']    = n_train / params['batch_size']
 
 # keep a part of the training dataset for validation:
-X_val = X[:n_val]
-X_train   = X[n_val:]
-y_val = y[:n_val]
-y_train   = y[n_val:]
+X_val = X_train_tmp[:n_val]
+X_train   = X_train_tmp[n_val:]
+y_val = y_train_tmp[:n_val]
+y_train   = y_train_tmp[n_val:]
 
 # determine graph structure (adjacency from Euclidean distance):
 dist, idx = graph.distance_scipy_spatial(X_train.T, k=10, metric='euclidean')
@@ -110,16 +117,17 @@ print(res[0])
 
 
 # save results:
-with open('{}/predictions.csv'.format(outdir), 'wb') as fp:
-	outfile.write(",".join(pred))
-with open('{}/performance.csv'.format(outdir), 'wb') as fp:
-	outfile.write(",".join(res))
-	
+with open('{}/predictions.csv'.format(outdir), 'w') as fp:
+    fp.write(",".join([str(x) for x in pred]))
+
+with open('{}/performance.csv'.format(outdir), 'w') as fp:
+    fp.write(",".join([str(x) for x in res]))
+
 # store models:
-with open('{}/model.pkl'.format(outdir), 'wb') as fp:
-    pickle.dump(model, fp)
-with open('{}/perm.pkl'.format(outdir), 'wb') as fp:
-    pickle.dump(perm, fp)	
+#with open('{}/model.pkl'.format(outdir), 'wb') as fp:
+#    pickle.dump(model, fp)
+#with open('{}/perm.pkl'.format(outdir), 'wb') as fp:
+#    pickle.dump(perm, fp)	
 	
 	
 	
