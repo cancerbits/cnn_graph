@@ -178,7 +178,7 @@ def plot_spectrum(L, algo='eig'):
         plt.plot(x, lamb, '.', label=lb)
     plt.legend(loc='best')
     plt.xlim(0, L[0].shape[0])
-    plt.ylim(ymin=0)
+    plt.ylim(bottom=0)
 
 
 def lanczos(L, X, K):

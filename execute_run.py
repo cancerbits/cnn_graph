@@ -5,30 +5,29 @@
 # Adapted from https://github.com/mdeff/cnn_graph + https://nbviewer.jupyter.org/github/mdeff/cnn_graph/blob/outputs/usage.ipynb
 #
 
+
 from lib import models, graph, coarsening, utils
-import pandas
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import sys
-#%matplotlib inline
 
 print("Training file: {}".format(sys.argv[1]))
 print("Test file: {}".format(sys.argv[2]))
 print("Output directory: {}".format(sys.argv[3]))
 
 ## load training data (could be a CV-fold):
-dt_train = pandas.read_csv(sys.argv[1])
+dt_train = pd.read_csv(sys.argv[1], header=None)
 X_train_tmp = dt_train.values[:,0:-1]
 y_train_tmp = dt_train.values[:,-1]
 
 ## load test data (could be a CV-fold):
-dt_test = pandas.read_csv(sys.argv[2])
+dt_test = pd.read_csv(sys.argv[2], header=None)
 X_test = dt_test.values[:,0:-1]
 y_test = dt_test.values[:,-1]
 
 outdir = sys.argv[3]
-
 
 
 ## constants:
@@ -44,7 +43,7 @@ n_train = n - n_val
 ## parameters for ML:
 params = dict()
 params['dir_name']       = 'demo'
-params['num_epochs']     = 5 #40
+params['num_epochs']     = 20 #40
 params['batch_size']     = 100
 params['eval_frequency'] = 200
 # Building blocks.
@@ -108,26 +107,12 @@ plt.savefig('{}/performance.pdf'.format(outdir))
 
 print('Time per step: {:.2f} ms'.format(t_step*1000))
 
-pred = model.predict(X_test)
-res = model.evaluate(X_test, y_test)
+#pred = model.predict(X_test)
+string, accuracy, f1, loss, pred, prob = model.evaluate(X_test, y_test)
 
-print(res[0])
+print(string)
 
-
-
-
+ 
 # save results:
-with open('{}/predictions.csv'.format(outdir), 'w') as fp:
-    fp.write(",".join([str(x) for x in pred]))
-
-with open('{}/performance.csv'.format(outdir), 'w') as fp:
-    fp.write(",".join([str(x) for x in res]))
-
-# store models:
-#with open('{}/model.pkl'.format(outdir), 'wb') as fp:
-#    pickle.dump(model, fp)
-#with open('{}/perm.pkl'.format(outdir), 'wb') as fp:
-#    pickle.dump(perm, fp)	
-	
-	
-	
+pd.DataFrame({'pred': pred,'prob': prob}).to_csv(index=False, path_or_buf='{}/predictions.csv'.format(outdir))
+pd.DataFrame({'training':sys.argv[1], 'training_size': dt_train.shape[0],'test':sys.argv[2], 'test_size': dt_test.shape[0], 'accuracy': accuracy, 'f1': f1, 'loss': loss}, index=[0]).to_csv(index=False, path_or_buf='{}/performance.csv'.format(outdir))
